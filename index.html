@@ -681,26 +681,109 @@
       URL.revokeObjectURL(url);
     }
 
-    async function importJson(file) {
-      const text = await file.text();
-      const imported = JSON.parse(text);
-      if (!Array.isArray(imported)) throw new Error('JSON must be an array.');
-      for (const item of imported) {
-        const data = {
-          id: typeof item.id === 'number' ? item.id : undefined,
-          word: item.word || '',
-          meaning: item.meaning || '',
-          example: item.example || '',
-          note: item.note || '',
+    function normalizeImportedItems(payload) {
+      const rawItems = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.words)
+          ? payload.words
+          : Array.isArray(payload?.items)
+            ? payload.items
+            : null;
+
+      if (!rawItems) {
+        throw new Error('JSON must be an array or an object with a words/items array.');
+      }
+
+      return rawItems.map((item, index) => {
+        const category = item.category ? `Category: ${item.category}` : '';
+        const source = item.source ? `Source: ${item.source}` : '';
+        const exampleKr = item.example_kr ? `Example KR: ${item.example_kr}` : '';
+
+        const mergedNote = [
+          item.note,
+          item.notes,
+          category,
+          source,
+          exampleKr,
+        ].filter(Boolean).join('\n');
+
+        const createdAt = item.createdAt || item.created_at || new Date().toISOString();
+
+        return {
+          id: Number.isInteger(item.id) && item.id > 0 ? item.id : undefined,
+          word: (item.word || item.expression || '').trim(),
+          meaning: (item.meaning || item.meaning_kr || '').trim(),
+          example: (item.example || item.example_en || '').trim(),
+          note: mergedNote.trim(),
           favorite: !!item.favorite,
           memorized: !!item.memorized,
-          createdAt: item.createdAt || new Date().toISOString(),
-          updatedAt: item.updatedAt || null,
+          createdAt: String(createdAt).includes('T')
+            ? String(createdAt)
+            : String(createdAt).replace(' ', 'T'),
+          updatedAt: item.updatedAt || item.updated_at || null,
+          _row: index + 1,
         };
-        if (!data.word || !data.meaning) continue;
-        await putWord(data);
+      }).filter(item => item.word && item.meaning);
+    }
+
+    async function importJson(file) {
+      const rawText = await file.text();
+      let payload;
+      try {
+        payload = JSON.parse(rawText);
+      } catch (err) {
+        throw new Error('Invalid JSON file.');
       }
+
+      const importedItems = normalizeImportedItems(payload);
+      if (!importedItems.length) {
+        throw new Error('No valid words found in the file.');
+      }
+
+      let importedCount = 0;
+      let updatedCount = 0;
+      let skippedCount = 0;
+
+      for (const item of importedItems) {
+        const duplicateByWord = words.find(existing =>
+          existing.word.trim().toLowerCase() === item.word.toLowerCase() &&
+          existing.meaning.trim().toLowerCase() === item.meaning.toLowerCase()
+        );
+
+        if (duplicateByWord) {
+          await putWord({
+            ...duplicateByWord,
+            ...item,
+            id: duplicateByWord.id,
+            createdAt: duplicateByWord.createdAt || item.createdAt,
+            updatedAt: new Date().toISOString(),
+          });
+          updatedCount += 1;
+          continue;
+        }
+
+        try {
+          if (item.id !== undefined) {
+            await putWord(item);
+          } else {
+            const { id, _row, ...data } = item;
+            await addWord(data);
+          }
+          importedCount += 1;
+        } catch (err) {
+          try {
+            const { id, _row, ...data } = item;
+            await addWord(data);
+            importedCount += 1;
+          } catch (err2) {
+            skippedCount += 1;
+            console.warn('Skipped import row', item._row, err2);
+          }
+        }
+      }
+
       await refresh();
+      alert(`Import complete. Added ${importedCount}, updated ${updatedCount}, skipped ${skippedCount}.`);
     }
 
     async function seedSampleWords() {
