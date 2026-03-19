@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0f172a" />
+  <title>Word Book PWA</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --ink: #0f172a;
+      --muted: #64748b;
+      --line: #e2e8f0;
+      --primary: #2563eb;
+      --primary-soft: #dbeafe;
+      --danger: #dc2626;
+      --ok: #16a34a;
+      --warn: #d97706;
+      --shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+      --radius: 18px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: linear-gradient(180deg, #eff6ff 0%, #f8fafc 220px);
+      color: var(--ink);
+    }
+    .app {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 20px 16px 48px;
+    }
+    .hero {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+    .hero h1 {
+      margin: 0;
+      font-size: 2rem;
+    }
+    .hero p {
+      margin: 6px 0 0;
+      color: var(--muted);
+    }
+    .pill {
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.75);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(226,232,240,0.8);
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    .nav {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .nav button {
+      border: 0;
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: white;
+      box-shadow: var(--shadow);
+      font-weight: 700;
+      cursor: pointer;
+      color: var(--muted);
+    }
+    .nav button.active {
+      background: var(--ink);
+      color: white;
+    }
+    .screen { display: none; }
+    .screen.active { display: block; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+      margin-bottom: 16px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 12px;
+    }
+    .col-4 { grid-column: span 4; }
+    .col-5 { grid-column: span 5; }
+    .col-6 { grid-column: span 6; }
+    .col-7 { grid-column: span 7; }
+    .col-8 { grid-column: span 8; }
+    .col-12 { grid-column: span 12; }
+    label {
+      display: block;
+      font-size: 0.92rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    input, textarea, select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 1rem;
+      background: #fff;
+    }
+    textarea { min-height: 110px; resize: vertical; }
+    .row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    button.primary, button.secondary, button.ghost, button.danger, button.ok {
+      border: 0;
+      border-radius: 12px;
+      padding: 11px 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    button.primary { background: var(--primary); color: white; }
+    button.secondary { background: #0f172a; color: white; }
+    button.ghost { background: #eef2ff; color: #3730a3; }
+    button.danger { background: #fee2e2; color: var(--danger); }
+    button.ok { background: #dcfce7; color: var(--ok); }
+    .muted { color: var(--muted); }
+    .word-list {
+      display: grid;
+      gap: 12px;
+    }
+    .word-item {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    }
+    .word-item h3 { margin: 0 0 8px; }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      margin-right: 6px;
+      margin-bottom: 6px;
+    }
+    .tag.favorite { background: #fef3c7; color: #92400e; }
+    .tag.memorized { background: #dcfce7; color: #166534; }
+    .tag.review { background: #e0e7ff; color: #3730a3; }
+    .quiz-box {
+      text-align: center;
+      padding: 28px 16px;
+    }
+    .quiz-word {
+      font-size: 2rem;
+      font-weight: 800;
+      margin: 16px 0;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+    .stat {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      box-shadow: var(--shadow);
+    }
+    .stat .k { color: var(--muted); font-size: 0.9rem; }
+    .stat .v { font-size: 1.5rem; font-weight: 800; margin-top: 4px; }
+    .hidden { display: none !important; }
+    .install-banner {
+      position: sticky;
+      bottom: 8px;
+      z-index: 5;
+    }
+    .empty {
+      text-align: center;
+      color: var(--muted);
+      padding: 24px 12px;
+      border: 1px dashed var(--line);
+      border-radius: 14px;
+    }
+    @media (max-width: 780px) {
+      .nav, .stats { grid-template-columns: 1fr; }
+      .col-4, .col-5, .col-6, .col-7, .col-8, .col-12 { grid-column: span 12; }
+      .quiz-word { font-size: 1.6rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="hero">
+      <div>
+        <h1>Word Book</h1>
+        <p>Study, quiz, and admin in one offline-ready PWA.</p>
+      </div>
+      <div class="pill" id="storageStatus">Loading words...</div>
+    </div>
+
+    <div class="stats" id="stats"></div>
+
+    <div class="nav">
+      <button class="active" data-screen="study">Study</button>
+      <button data-screen="quiz">Quiz</button>
+      <button data-screen="admin">Admin</button>
+    </div>
+
+    <section class="screen active" id="studyScreen">
+      <div class="card">
+        <div class="grid">
+          <div class="col-5">
+            <label for="searchInput">Search</label>
+            <input id="searchInput" placeholder="Search word, meaning, example..." />
+          </div>
+          <div class="col-4">
+            <label for="filterSelect">Filter</label>
+            <select id="filterSelect">
+              <option value="all">All words</option>
+              <option value="review">Need review</option>
+              <option value="favorite">Favorites</option>
+              <option value="memorized">Memorized</option>
+            </select>
+          </div>
+          <div class="col-3">
+            <label for="sortSelect">Sort</label>
+            <select id="sortSelect">
+              <option value="newest">Newest first</option>
+              <option value="oldest">Oldest first</option>
+              <option value="az">A → Z</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="word-list" id="studyList"></div>
+    </section>
+
+    <section class="screen" id="quizScreen">
+      <div class="card quiz-box">
+        <div class="row" style="justify-content:center; margin-bottom: 8px;">
+          <button class="ghost" id="quizModeMeaning">Meaning → Word</button>
+          <button class="ghost" id="quizModeWord">Word → Meaning</button>
+          <button class="secondary" id="quizNextBtn">Next</button>
+        </div>
+        <div class="muted" id="quizPromptLabel">Guess the word from the meaning</div>
+        <div class="quiz-word" id="quizPrompt">-</div>
+        <div class="row" style="justify-content:center; max-width: 520px; margin: 0 auto;">
+          <input id="quizAnswer" placeholder="Type your answer" />
+          <button class="primary" id="quizCheckBtn">Check</button>
+        </div>
+        <div style="margin-top:16px; font-weight:700;" id="quizResult"></div>
+        <div class="muted" style="margin-top:10px;" id="quizHint"></div>
+      </div>
+    </section>
+
+    <section class="screen" id="adminScreen">
+      <div class="card">
+        <h2 style="margin-top:0;">Add or edit word</h2>
+        <div class="grid">
+          <div class="col-6">
+            <label for="wordInput">Word</label>
+            <input id="wordInput" placeholder="accurate" />
+          </div>
+          <div class="col-6">
+            <label for="meaningInput">Meaning</label>
+            <input id="meaningInput" placeholder="정확한" />
+          </div>
+          <div class="col-12">
+            <label for="exampleInput">Example</label>
+            <textarea id="exampleInput" placeholder="The report is accurate."></textarea>
+          </div>
+          <div class="col-6">
+            <label for="noteInput">Note</label>
+            <input id="noteInput" placeholder="Related nuance, synonym, etc." />
+          </div>
+          <div class="col-3">
+            <label><input type="checkbox" id="favoriteInput" style="width:auto; margin-right:8px;"> Favorite</label>
+          </div>
+          <div class="col-3">
+            <label><input type="checkbox" id="memorizedInput" style="width:auto; margin-right:8px;"> Memorized</label>
+          </div>
+        </div>
+        <div class="row" style="margin-top:14px;">
+          <button class="primary" id="saveBtn">Save word</button>
+          <button class="ghost" id="resetBtn">Reset form</button>
+          <button class="secondary" id="seedBtn">Add sample words</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 style="margin-top:0;">Backup</h2>
+        <div class="row">
+          <button class="ok" id="exportBtn">Export JSON</button>
+          <label class="ghost" style="display:inline-flex; align-items:center; cursor:pointer; padding:11px 14px; border-radius:12px; background:#eef2ff; color:#3730a3; font-weight:700;">
+            Import JSON
+            <input type="file" id="importFile" accept="application/json" class="hidden" />
+          </label>
+          <button class="danger" id="clearBtn">Delete all words</button>
+        </div>
+        <p class="muted">This replaces the old admin service. Your data stays on this device unless you export it.</p>
+      </div>
+
+      <div class="card">
+        <h2 style="margin-top:0;">Manage words</h2>
+        <div class="word-list" id="adminList"></div>
+      </div>
+    </section>
+
+    <div class="install-banner hidden" id="installBanner">
+      <div class="card" style="padding:12px 14px; display:flex; justify-content:space-between; align-items:center; gap:12px;">
+        <div>
+          <strong>Install this app</strong>
+          <div class="muted">Add it to your home screen for a more app-like experience.</div>
+        </div>
+        <button class="primary" id="installBtn">Install</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const DB_NAME = 'wordbook-pwa-db';
+    const STORE_NAME = 'words';
+    let db;
+    let words = [];
+    let editingId = null;
+    let deferredPrompt = null;
+    let quizMode = 'meaningToWord';
+    let currentQuizWord = null;
+
+    const $ = (id) => document.getElementById(id);
+
+    function openDb() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, 1);
+        request.onupgradeneeded = (event) => {
+          const db = event.target.result;
+          if (!db.objectStoreNames.contains(STORE_NAME)) {
+            const store = db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
+            store.createIndex('word', 'word', { unique: false });
+            store.createIndex('createdAt', 'createdAt', { unique: false });
+          }
+        };
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    function tx(storeMode = 'readonly') {
+      return db.transaction(STORE_NAME, storeMode).objectStore(STORE_NAME);
+    }
+
+    function getAllWords() {
+      return new Promise((resolve, reject) => {
+        const request = tx().getAll();
+        request.onsuccess = () => resolve(request.result || []);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    function addWord(data) {
+      return new Promise((resolve, reject) => {
+        const request = tx('readwrite').add(data);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    function putWord(data) {
+      return new Promise((resolve, reject) => {
+        const request = tx('readwrite').put(data);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    function deleteWord(id) {
+      return new Promise((resolve, reject) => {
+        const request = tx('readwrite').delete(id);
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    function clearAllWords() {
+      return new Promise((resolve, reject) => {
+        const request = tx('readwrite').clear();
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    function escapeHtml(text = '') {
+      return text
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    function formatDate(iso) {
+      if (!iso) return '-';
+      const d = new Date(iso);
+      return d.toLocaleDateString();
+    }
+
+    function updateStorageStatus() {
+      $('storageStatus').textContent = `${words.length} word${words.length === 1 ? '' : 's'} stored offline`;
+    }
+
+    function renderStats() {
+      const total = words.length;
+      const favorites = words.filter(w => w.favorite).length;
+      const memorized = words.filter(w => w.memorized).length;
+      const review = words.filter(w => !w.memorized).length;
+      $('stats').innerHTML = [
+        ['Total', total],
+        ['Favorites', favorites],
+        ['Memorized', memorized],
+        ['Need review', review],
+      ].map(([k, v]) => `<div class="stat"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('');
+    }
+
+    function filteredWords() {
+      const q = $('searchInput').value.trim().toLowerCase();
+      const filter = $('filterSelect').value;
+      const sort = $('sortSelect').value;
+      let result = words.filter(w => {
+        const hit = !q || [w.word, w.meaning, w.example, w.note].join(' ').toLowerCase().includes(q);
+        if (!hit) return false;
+        if (filter === 'review') return !w.memorized;
+        if (filter === 'favorite') return !!w.favorite;
+        if (filter === 'memorized') return !!w.memorized;
+        return true;
+      });
+
+      if (sort === 'az') result.sort((a, b) => a.word.localeCompare(b.word));
+      else if (sort === 'oldest') result.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+      else result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+      return result;
+    }
+
+    function renderStudy() {
+      const list = filteredWords();
+      if (!list.length) {
+        $('studyList').innerHTML = '<div class="empty">No words found.</div>';
+        return;
+      }
+      $('studyList').innerHTML = list.map(w => `
+        <div class="word-item">
+          <div class="row" style="justify-content:space-between; align-items:flex-start;">
+            <div>
+              <h3>${escapeHtml(w.word)}</h3>
+              <div><strong>${escapeHtml(w.meaning)}</strong></div>
+            </div>
+            <div class="muted">${formatDate(w.createdAt)}</div>
+          </div>
+          <p>${escapeHtml(w.example || '')}</p>
+          ${w.note ? `<p class="muted">${escapeHtml(w.note)}</p>` : ''}
+          <div>
+            ${w.favorite ? '<span class="tag favorite">Favorite</span>' : ''}
+            ${w.memorized ? '<span class="tag memorized">Memorized</span>' : '<span class="tag review">Need review</span>'}
+          </div>
+          <div class="row" style="margin-top:10px;">
+            <button class="ghost" onclick="toggleFavorite(${w.id})">${w.favorite ? 'Unfavorite' : 'Favorite'}</button>
+            <button class="ok" onclick="toggleMemorized(${w.id})">${w.memorized ? 'Mark review' : 'Mark memorized'}</button>
+            <button class="secondary" onclick="speakWord('${escapeHtml(w.word)}')">Speak</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderAdmin() {
+      if (!words.length) {
+        $('adminList').innerHTML = '<div class="empty">No words yet. Add your first word above.</div>';
+        return;
+      }
+      const sorted = [...words].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      $('adminList').innerHTML = sorted.map(w => `
+        <div class="word-item">
+          <div class="row" style="justify-content:space-between; align-items:flex-start;">
+            <div>
+              <h3>${escapeHtml(w.word)}</h3>
+              <div><strong>${escapeHtml(w.meaning)}</strong></div>
+            </div>
+            <div class="muted">ID ${w.id}</div>
+          </div>
+          <p>${escapeHtml(w.example || '')}</p>
+          ${w.note ? `<p class="muted">${escapeHtml(w.note)}</p>` : ''}
+          <div class="row">
+            <button class="ghost" onclick="editWord(${w.id})">Edit</button>
+            <button class="danger" onclick="removeWord(${w.id})">Delete</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function setScreen(screen) {
+      document.querySelectorAll('.nav button').forEach(btn => btn.classList.toggle('active', btn.dataset.screen === screen));
+      document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+      if (screen === 'study') $('studyScreen').classList.add('active');
+      if (screen === 'quiz') $('quizScreen').classList.add('active');
+      if (screen === 'admin') $('adminScreen').classList.add('active');
+    }
+
+    async function refresh() {
+      words = await getAllWords();
+      updateStorageStatus();
+      renderStats();
+      renderStudy();
+      renderAdmin();
+      if (!currentQuizWord && words.length) nextQuiz();
+      if (!words.length) {
+        $('quizPrompt').textContent = 'Add words first';
+        $('quizHint').textContent = 'Use the Admin tab to create your first vocabulary items.';
+      }
+    }
+
+    async function saveForm() {
+      const word = $('wordInput').value.trim();
+      const meaning = $('meaningInput').value.trim();
+      const example = $('exampleInput').value.trim();
+      const note = $('noteInput').value.trim();
+      const favorite = $('favoriteInput').checked;
+      const memorized = $('memorizedInput').checked;
+
+      if (!word || !meaning) {
+        alert('Word and meaning are required.');
+        return;
+      }
+
+      const data = {
+        word,
+        meaning,
+        example,
+        note,
+        favorite,
+        memorized,
+        createdAt: new Date().toISOString(),
+      };
+
+      if (editingId !== null) {
+        const prev = words.find(w => w.id === editingId);
+        await putWord({ ...prev, ...data, id: editingId, createdAt: prev.createdAt || data.createdAt, updatedAt: new Date().toISOString() });
+      } else {
+        await addWord(data);
+      }
+
+      resetForm();
+      await refresh();
+      setScreen('admin');
+    }
+
+    function resetForm() {
+      editingId = null;
+      $('wordInput').value = '';
+      $('meaningInput').value = '';
+      $('exampleInput').value = '';
+      $('noteInput').value = '';
+      $('favoriteInput').checked = false;
+      $('memorizedInput').checked = false;
+      $('saveBtn').textContent = 'Save word';
+    }
+
+    window.editWord = function(id) {
+      const w = words.find(item => item.id === id);
+      if (!w) return;
+      editingId = id;
+      $('wordInput').value = w.word || '';
+      $('meaningInput').value = w.meaning || '';
+      $('exampleInput').value = w.example || '';
+      $('noteInput').value = w.note || '';
+      $('favoriteInput').checked = !!w.favorite;
+      $('memorizedInput').checked = !!w.memorized;
+      $('saveBtn').textContent = 'Update word';
+      setScreen('admin');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    window.removeWord = async function(id) {
+      const w = words.find(item => item.id === id);
+      if (!w) return;
+      if (!confirm(`Delete "${w.word}"?`)) return;
+      await deleteWord(id);
+      if (currentQuizWord?.id === id) currentQuizWord = null;
+      await refresh();
+    }
+
+    window.toggleFavorite = async function(id) {
+      const w = words.find(item => item.id === id);
+      if (!w) return;
+      await putWord({ ...w, favorite: !w.favorite, updatedAt: new Date().toISOString() });
+      await refresh();
+    }
+
+    window.toggleMemorized = async function(id) {
+      const w = words.find(item => item.id === id);
+      if (!w) return;
+      await putWord({ ...w, memorized: !w.memorized, updatedAt: new Date().toISOString() });
+      await refresh();
+    }
+
+    window.speakWord = function(word) {
+      if (!('speechSynthesis' in window)) {
+        alert('Speech is not supported in this browser.');
+        return;
+      }
+      const utterance = new SpeechSynthesisUtterance(word);
+      utterance.lang = 'en-US';
+      speechSynthesis.cancel();
+      speechSynthesis.speak(utterance);
+    }
+
+    function nextQuiz() {
+      if (!words.length) return;
+      const pool = words.filter(w => !w.memorized);
+      const source = pool.length ? pool : words;
+      currentQuizWord = source[Math.floor(Math.random() * source.length)];
+      $('quizAnswer').value = '';
+      $('quizResult').textContent = '';
+      $('quizHint').textContent = '';
+
+      if (quizMode === 'meaningToWord') {
+        $('quizPromptLabel').textContent = 'Guess the word from the meaning';
+        $('quizPrompt').textContent = currentQuizWord.meaning;
+        $('quizAnswer').placeholder = 'Type the English word';
+      } else {
+        $('quizPromptLabel').textContent = 'Guess the meaning from the word';
+        $('quizPrompt').textContent = currentQuizWord.word;
+        $('quizAnswer').placeholder = 'Type the meaning';
+      }
+    }
+
+    async function checkQuiz() {
+      if (!currentQuizWord) return;
+      const answer = $('quizAnswer').value.trim().toLowerCase();
+      if (!answer) return;
+
+      const expected = quizMode === 'meaningToWord'
+        ? currentQuizWord.word.trim().toLowerCase()
+        : currentQuizWord.meaning.trim().toLowerCase();
+
+      if (answer === expected) {
+        $('quizResult').textContent = 'Correct';
+        $('quizResult').style.color = 'var(--ok)';
+        $('quizHint').textContent = `Example: ${currentQuizWord.example || '-'}`;
+        if (!currentQuizWord.memorized) {
+          await putWord({ ...currentQuizWord, memorized: true, updatedAt: new Date().toISOString() });
+          await refresh();
+          currentQuizWord = words.find(w => w.id === currentQuizWord.id) || currentQuizWord;
+        }
+      } else {
+        $('quizResult').textContent = 'Not quite';
+        $('quizResult').style.color = 'var(--danger)';
+        $('quizHint').textContent = quizMode === 'meaningToWord'
+          ? `Answer: ${currentQuizWord.word} / ${currentQuizWord.meaning}`
+          : `Answer: ${currentQuizWord.meaning} / ${currentQuizWord.word}`;
+      }
+    }
+
+    async function exportJson() {
+      const blob = new Blob([JSON.stringify(words, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `wordbook-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    async function importJson(file) {
+      const text = await file.text();
+      const imported = JSON.parse(text);
+      if (!Array.isArray(imported)) throw new Error('JSON must be an array.');
+      for (const item of imported) {
+        const data = {
+          id: typeof item.id === 'number' ? item.id : undefined,
+          word: item.word || '',
+          meaning: item.meaning || '',
+          example: item.example || '',
+          note: item.note || '',
+          favorite: !!item.favorite,
+          memorized: !!item.memorized,
+          createdAt: item.createdAt || new Date().toISOString(),
+          updatedAt: item.updatedAt || null,
+        };
+        if (!data.word || !data.meaning) continue;
+        await putWord(data);
+      }
+      await refresh();
+    }
+
+    async function seedSampleWords() {
+      const sample = [
+        { word: 'accurate', meaning: '정확한', example: 'The report is accurate.', note: 'close to exact truth', favorite: true, memorized: false },
+        { word: 'hesitate', meaning: '망설이다', example: 'Do not hesitate to ask questions.', note: 'pause before action', favorite: false, memorized: false },
+        { word: 'practical', meaning: '실용적인', example: 'This is a practical solution.', note: 'useful in real life', favorite: false, memorized: true },
+      ];
+      for (const item of sample) {
+        await addWord({ ...item, createdAt: new Date().toISOString() });
+      }
+      await refresh();
+      setScreen('study');
+    }
+
+    function bindEvents() {
+      document.querySelectorAll('.nav button').forEach(btn => btn.addEventListener('click', () => setScreen(btn.dataset.screen)));
+      ['searchInput', 'filterSelect', 'sortSelect'].forEach(id => $(id).addEventListener('input', renderStudy));
+      $('saveBtn').addEventListener('click', saveForm);
+      $('resetBtn').addEventListener('click', resetForm);
+      $('seedBtn').addEventListener('click', seedSampleWords);
+      $('exportBtn').addEventListener('click', exportJson);
+      $('clearBtn').addEventListener('click', async () => {
+        if (!confirm('Delete all words from this device?')) return;
+        await clearAllWords();
+        currentQuizWord = null;
+        await refresh();
+      });
+      $('importFile').addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        try {
+          await importJson(file);
+          alert('Import complete.');
+        } catch (err) {
+          alert(`Import failed: ${err.message}`);
+        } finally {
+          e.target.value = '';
+        }
+      });
+      $('quizNextBtn').addEventListener('click', nextQuiz);
+      $('quizCheckBtn').addEventListener('click', checkQuiz);
+      $('quizAnswer').addEventListener('keydown', (e) => { if (e.key === 'Enter') checkQuiz(); });
+      $('quizModeMeaning').addEventListener('click', () => { quizMode = 'meaningToWord'; nextQuiz(); });
+      $('quizModeWord').addEventListener('click', () => { quizMode = 'wordToMeaning'; nextQuiz(); });
+      $('installBtn').addEventListener('click', async () => {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        await deferredPrompt.userChoice;
+        deferredPrompt = null;
+        $('installBanner').classList.add('hidden');
+      });
+    }
+
+    async function registerSw() {
+      if ('serviceWorker' in navigator) {
+        try {
+          await navigator.serviceWorker.register('./sw.js');
+        } catch (err) {
+          console.warn('Service worker registration failed:', err);
+        }
+      }
+    }
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      $('installBanner').classList.remove('hidden');
+    });
+
+    async function init() {
+      db = await openDb();
+      bindEvents();
+      await refresh();
+      await registerSw();
+    }
+
+    init().catch(err => {
+      console.error(err);
+      $('storageStatus').textContent = 'Failed to load local database';
+      alert('Failed to initialize the app. Check the console for details.');
+    });
+  </script>
+</body>
+</html>
