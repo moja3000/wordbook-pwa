@@ -166,6 +166,36 @@
       font-weight: 800;
       margin: 16px 0;
     }
+    .quiz-choice {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px 16px;
+      background: white;
+      box-shadow: var(--shadow);
+      font-weight: 700;
+      cursor: pointer;
+      text-align: left;
+      transition: transform 0.08s ease, border-color 0.12s ease, background 0.12s ease;
+      width: 100%;
+    }
+    .quiz-choice:hover {
+      transform: translateY(-1px);
+      border-color: #cbd5e1;
+    }
+    .quiz-choice.correct {
+      background: #dcfce7;
+      border-color: #86efac;
+      color: #166534;
+    }
+    .quiz-choice.wrong {
+      background: #fee2e2;
+      border-color: #fca5a5;
+      color: #991b1b;
+    }
+    .quiz-choice.disabled {
+      pointer-events: none;
+      opacity: 0.95;
+    }
     .stats {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -197,6 +227,7 @@
       .nav, .stats { grid-template-columns: 1fr; }
       .col-4, .col-5, .col-6, .col-7, .col-8, .col-12 { grid-column: span 12; }
       .quiz-word { font-size: 1.6rem; }
+      #quizChoices { grid-template-columns: 1fr !important; }
     }
   </style>
 </head>
@@ -250,16 +281,16 @@
     <section class="screen" id="quizScreen">
       <div class="card quiz-box">
         <div class="row" style="justify-content:center; margin-bottom: 8px;">
-          <button class="ghost" id="quizModeMeaning">Meaning → Word</button>
-          <button class="ghost" id="quizModeWord">Word → Meaning</button>
+          <button class="ghost" id="quizModeMeaning">한글 뜻 → 영어 4지선다</button>
+          <button class="ghost" id="quizModeWord">영어 단어 → 한글 뜻 4지선다</button>
           <button class="secondary" id="quizNextBtn">Next</button>
         </div>
-        <div class="muted" id="quizPromptLabel">Guess the word from the meaning</div>
+
+        <div class="muted" id="quizPromptLabel">뜻을 보고 맞는 영어 단어를 고르세요</div>
         <div class="quiz-word" id="quizPrompt">-</div>
-        <div class="row" style="justify-content:center; max-width: 520px; margin: 0 auto;">
-          <input id="quizAnswer" placeholder="Type your answer" />
-          <button class="primary" id="quizCheckBtn">Check</button>
-        </div>
+
+        <div id="quizChoices" style="display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:12px; max-width:640px; margin:20px auto 0;"></div>
+
         <div style="margin-top:16px; font-weight:700;" id="quizResult"></div>
         <div class="muted" style="margin-top:10px;" id="quizHint"></div>
       </div>
@@ -338,6 +369,8 @@
     let deferredPrompt = null;
     let quizMode = 'meaningToWord';
     let currentQuizWord = null;
+    let currentQuizChoices = [];
+    let quizLocked = false;
 
     const $ = (id) => document.getElementById(id);
 
@@ -522,10 +555,17 @@
       renderStats();
       renderStudy();
       renderAdmin();
-      if (!currentQuizWord && words.length) nextQuiz();
-      if (!words.length) {
+
+      if (words.length) {
+        if (!currentQuizWord) nextQuiz();
+      } else {
+        currentQuizWord = null;
+        currentQuizChoices = [];
+        $('quizPromptLabel').textContent = '퀴즈를 시작하려면 단어를 먼저 추가하세요';
         $('quizPrompt').textContent = 'Add words first';
+        $('quizResult').textContent = '';
         $('quizHint').textContent = 'Use the Admin tab to create your first vocabulary items.';
+        $('quizChoices').innerHTML = '';
       }
     }
 
@@ -624,51 +664,131 @@
       speechSynthesis.speak(utterance);
     }
 
+    function shuffle(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function getQuizPool() {
+      const pool = words.filter(w => !w.memorized);
+      return pool.length ? pool : words;
+    }
+
+    function pickRandomItems(source, count, excludeId = null) {
+      const filtered = excludeId === null ? [...source] : source.filter(item => item.id !== excludeId);
+      return shuffle(filtered).slice(0, Math.min(count, filtered.length));
+    }
+
+    function buildQuizChoices(answerWord) {
+      const basePool = words.length >= 4 ? words : getQuizPool();
+      const wrongs = pickRandomItems(basePool, 3, answerWord.id);
+      const rawChoices = [answerWord, ...wrongs];
+
+      if (rawChoices.length < 4) {
+        const more = pickRandomItems(words, 4 - rawChoices.length, answerWord.id);
+        for (const item of more) {
+          if (!rawChoices.some(x => x.id === item.id)) rawChoices.push(item);
+        }
+      }
+
+      return shuffle(rawChoices).slice(0, 4);
+    }
+
+    function renderQuizChoices() {
+      const box = $('quizChoices');
+      if (!currentQuizWord || !currentQuizChoices.length) {
+        box.innerHTML = '';
+        return;
+      }
+
+      box.innerHTML = currentQuizChoices.map((choice, index) => {
+        const label = quizMode === 'meaningToWord' ? choice.word : choice.meaning;
+        return `
+          <button class="quiz-choice" data-choice-id="${choice.id}">
+            ${index + 1}. ${escapeHtml(label)}
+          </button>
+        `;
+      }).join('');
+
+      box.querySelectorAll('.quiz-choice').forEach(btn => {
+        btn.addEventListener('click', () => selectQuizChoice(Number(btn.dataset.choiceId), btn));
+      });
+    }
+
+    function updateQuizModeButtons() {
+      $('quizModeMeaning').classList.toggle('secondary', quizMode === 'meaningToWord');
+      $('quizModeMeaning').classList.toggle('ghost', quizMode !== 'meaningToWord');
+
+      $('quizModeWord').classList.toggle('secondary', quizMode === 'wordToMeaning');
+      $('quizModeWord').classList.toggle('ghost', quizMode !== 'wordToMeaning');
+    }
+
     function nextQuiz() {
       if (!words.length) return;
-      const pool = words.filter(w => !w.memorized);
-      const source = pool.length ? pool : words;
+
+      const source = getQuizPool();
       currentQuizWord = source[Math.floor(Math.random() * source.length)];
-      $('quizAnswer').value = '';
+      currentQuizChoices = buildQuizChoices(currentQuizWord);
+      quizLocked = false;
+
       $('quizResult').textContent = '';
       $('quizHint').textContent = '';
 
       if (quizMode === 'meaningToWord') {
-        $('quizPromptLabel').textContent = 'Guess the word from the meaning';
+        $('quizPromptLabel').textContent = '뜻을 보고 맞는 영어 단어를 고르세요';
         $('quizPrompt').textContent = currentQuizWord.meaning;
-        $('quizAnswer').placeholder = 'Type the English word';
       } else {
-        $('quizPromptLabel').textContent = 'Guess the meaning from the word';
+        $('quizPromptLabel').textContent = '영어 단어를 보고 맞는 한글 뜻을 고르세요';
         $('quizPrompt').textContent = currentQuizWord.word;
-        $('quizAnswer').placeholder = 'Type the meaning';
       }
+
+      renderQuizChoices();
+      updateQuizModeButtons();
     }
 
-    async function checkQuiz() {
-      if (!currentQuizWord) return;
-      const answer = $('quizAnswer').value.trim().toLowerCase();
-      if (!answer) return;
+    async function selectQuizChoice(choiceId, clickedBtn) {
+      if (!currentQuizWord || quizLocked) return;
+      quizLocked = true;
 
-      const expected = quizMode === 'meaningToWord'
-        ? currentQuizWord.word.trim().toLowerCase()
-        : currentQuizWord.meaning.trim().toLowerCase();
+      const isCorrect = choiceId === currentQuizWord.id;
+      const buttons = [...document.querySelectorAll('.quiz-choice')];
 
-      if (answer === expected) {
-        $('quizResult').textContent = 'Correct';
-        $('quizResult').style.color = 'var(--ok)';
-        $('quizHint').textContent = `Example: ${currentQuizWord.example || '-'}`;
-        if (!currentQuizWord.memorized) {
-          await putWord({ ...currentQuizWord, memorized: true, updatedAt: new Date().toISOString() });
-          await refresh();
-          currentQuizWord = words.find(w => w.id === currentQuizWord.id) || currentQuizWord;
-        }
-      } else {
+      buttons.forEach(btn => {
+        btn.classList.add('disabled');
+        const btnId = Number(btn.dataset.choiceId);
+        if (btnId === currentQuizWord.id) btn.classList.add('correct');
+      });
+
+      if (!isCorrect) {
+        clickedBtn.classList.add('wrong');
         $('quizResult').textContent = 'Not quite';
         $('quizResult').style.color = 'var(--danger)';
-        $('quizHint').textContent = quizMode === 'meaningToWord'
-          ? `Answer: ${currentQuizWord.word} / ${currentQuizWord.meaning}`
-          : `Answer: ${currentQuizWord.meaning} / ${currentQuizWord.word}`;
+        $('quizHint').textContent = `정답: ${currentQuizWord.word} = ${currentQuizWord.meaning}`;
+        quizLocked = false;
+        return;
       }
+
+      clickedBtn.classList.add('correct');
+      $('quizResult').textContent = 'Correct';
+      $('quizResult').style.color = 'var(--ok)';
+      $('quizHint').textContent = `Example: ${currentQuizWord.example || '-'}`;
+
+      if (!currentQuizWord.memorized) {
+        await putWord({
+          ...currentQuizWord,
+          memorized: true,
+          updatedAt: new Date().toISOString()
+        });
+        await refresh();
+      }
+
+      setTimeout(() => {
+        nextQuiz();
+      }, 500);
     }
 
     async function exportJson() {
@@ -810,6 +930,7 @@
         if (!confirm('Delete all words from this device?')) return;
         await clearAllWords();
         currentQuizWord = null;
+        currentQuizChoices = [];
         await refresh();
       });
       $('importFile').addEventListener('change', async (e) => {
@@ -825,10 +946,14 @@
         }
       });
       $('quizNextBtn').addEventListener('click', nextQuiz);
-      $('quizCheckBtn').addEventListener('click', checkQuiz);
-      $('quizAnswer').addEventListener('keydown', (e) => { if (e.key === 'Enter') checkQuiz(); });
-      $('quizModeMeaning').addEventListener('click', () => { quizMode = 'meaningToWord'; nextQuiz(); });
-      $('quizModeWord').addEventListener('click', () => { quizMode = 'wordToMeaning'; nextQuiz(); });
+      $('quizModeMeaning').addEventListener('click', () => {
+        quizMode = 'meaningToWord';
+        nextQuiz();
+      });
+      $('quizModeWord').addEventListener('click', () => {
+        quizMode = 'wordToMeaning';
+        nextQuiz();
+      });
       $('installBtn').addEventListener('click', async () => {
         if (!deferredPrompt) return;
         deferredPrompt.prompt();
@@ -858,6 +983,7 @@
       db = await openDb();
       bindEvents();
       await refresh();
+      updateQuizModeButtons();
       await registerSw();
     }
 
