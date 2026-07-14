@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#0f172a" />
-  <title>Word Book PWA</title>
+  <title>Word & Phrase Book PWA</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <style>
     :root {
@@ -21,18 +21,22 @@
       --shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
       --radius: 18px;
     }
+
     * { box-sizing: border-box; }
+
     body {
       margin: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background: linear-gradient(180deg, #eff6ff 0%, #f8fafc 220px);
       color: var(--ink);
     }
+
     .app {
-      max-width: 980px;
+      max-width: 1040px;
       margin: 0 auto;
-      padding: 20px 16px 48px;
+      padding: 20px 16px 56px;
     }
+
     .hero {
       display: flex;
       gap: 16px;
@@ -41,29 +45,52 @@
       margin-bottom: 18px;
       flex-wrap: wrap;
     }
+
     .hero h1 {
       margin: 0;
       font-size: 2rem;
     }
+
     .hero p {
       margin: 6px 0 0;
       color: var(--muted);
     }
+
     .pill {
       padding: 8px 12px;
       border-radius: 999px;
-      background: rgba(255,255,255,0.75);
+      background: rgba(255,255,255,0.78);
       backdrop-filter: blur(10px);
-      border: 1px solid rgba(226,232,240,0.8);
+      border: 1px solid rgba(226,232,240,0.9);
       color: var(--muted);
       font-size: 0.9rem;
     }
-    .nav {
+
+    .stats {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(5, 1fr);
       gap: 10px;
       margin-bottom: 18px;
     }
+
+    .stat {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      box-shadow: var(--shadow);
+    }
+
+    .stat .k { color: var(--muted); font-size: 0.88rem; }
+    .stat .v { font-size: 1.45rem; font-weight: 800; margin-top: 4px; }
+
+    .nav {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
     .nav button {
       border: 0;
       padding: 14px 16px;
@@ -74,12 +101,15 @@
       cursor: pointer;
       color: var(--muted);
     }
+
     .nav button.active {
       background: var(--ink);
       color: white;
     }
+
     .screen { display: none; }
     .screen.active { display: block; }
+
     .card {
       background: var(--card);
       border: 1px solid var(--line);
@@ -88,23 +118,28 @@
       box-shadow: var(--shadow);
       margin-bottom: 16px;
     }
+
     .grid {
       display: grid;
       grid-template-columns: repeat(12, 1fr);
       gap: 12px;
     }
+
+    .col-3 { grid-column: span 3; }
     .col-4 { grid-column: span 4; }
     .col-5 { grid-column: span 5; }
     .col-6 { grid-column: span 6; }
     .col-7 { grid-column: span 7; }
     .col-8 { grid-column: span 8; }
     .col-12 { grid-column: span 12; }
+
     label {
       display: block;
       font-size: 0.92rem;
       font-weight: 700;
       margin-bottom: 8px;
     }
+
     input, textarea, select {
       width: 100%;
       border: 1px solid var(--line);
@@ -113,59 +148,116 @@
       font-size: 1rem;
       background: #fff;
     }
-    textarea { min-height: 110px; resize: vertical; }
+
+    textarea { min-height: 100px; resize: vertical; }
+
     .row {
       display: flex;
       gap: 10px;
       flex-wrap: wrap;
       align-items: center;
     }
-    button.primary, button.secondary, button.ghost, button.danger, button.ok {
+
+    button.primary, button.secondary, button.ghost, button.danger, button.ok, button.warn {
       border: 0;
       border-radius: 12px;
       padding: 11px 14px;
       font-weight: 700;
       cursor: pointer;
     }
+
     button.primary { background: var(--primary); color: white; }
     button.secondary { background: #0f172a; color: white; }
     button.ghost { background: #eef2ff; color: #3730a3; }
     button.danger { background: #fee2e2; color: var(--danger); }
     button.ok { background: #dcfce7; color: var(--ok); }
+    button.warn { background: #ffedd5; color: #9a3412; }
+
+    button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
     .muted { color: var(--muted); }
-    .word-list {
+
+    .entry-list {
       display: grid;
       gap: 12px;
     }
-    .word-item {
+
+    .entry-item {
       border: 1px solid var(--line);
       border-radius: 16px;
-      padding: 14px;
+      padding: 16px;
       background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
     }
-    .word-item h3 { margin: 0 0 8px; }
+
+    .entry-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .entry-title {
+      margin: 0 0 6px;
+      font-size: 1.25rem;
+      line-height: 1.25;
+    }
+
+    .meaning {
+      font-weight: 800;
+      font-size: 1.02rem;
+    }
+
+    .detail-box {
+      margin-top: 12px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: #f8fafc;
+      border: 1px solid var(--line);
+    }
+
+    .detail-row {
+      margin: 7px 0;
+      line-height: 1.55;
+    }
+
+    .detail-label {
+      display: inline-block;
+      min-width: 72px;
+      font-weight: 800;
+      color: #334155;
+    }
+
     .tag {
       display: inline-flex;
       align-items: center;
       padding: 6px 10px;
       border-radius: 999px;
-      font-size: 0.82rem;
+      font-size: 0.8rem;
       font-weight: 700;
       margin-right: 6px;
       margin-bottom: 6px;
     }
+
+    .tag.word { background: #e0f2fe; color: #075985; }
+    .tag.phrase { background: #ede9fe; color: #5b21b6; }
     .tag.favorite { background: #fef3c7; color: #92400e; }
     .tag.memorized { background: #dcfce7; color: #166534; }
     .tag.review { background: #e0e7ff; color: #3730a3; }
+
     .quiz-box {
       text-align: center;
       padding: 28px 16px;
     }
+
     .quiz-word {
       font-size: 2rem;
       font-weight: 800;
       margin: 16px 0;
     }
+
     .quiz-choice {
       border: 1px solid var(--line);
       border-radius: 14px;
@@ -178,44 +270,87 @@
       transition: transform 0.08s ease, border-color 0.12s ease, background 0.12s ease;
       width: 100%;
     }
+
     .quiz-choice:hover {
       transform: translateY(-1px);
       border-color: #cbd5e1;
     }
+
     .quiz-choice.correct {
       background: #dcfce7;
       border-color: #86efac;
       color: #166534;
     }
+
     .quiz-choice.wrong {
       background: #fee2e2;
       border-color: #fca5a5;
       color: #991b1b;
     }
+
     .quiz-choice.disabled {
       pointer-events: none;
       opacity: 0.95;
     }
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 10px;
+
+    .player {
+      position: sticky;
+      top: 10px;
+      z-index: 4;
     }
-    .stat {
-      background: white;
+
+    .player-title {
+      font-size: 1.45rem;
+      font-weight: 800;
+      margin: 0 0 8px;
+    }
+
+    .player-progress {
+      width: 100%;
+      height: 10px;
+      border-radius: 999px;
+      background: #e2e8f0;
+      overflow: hidden;
+      margin: 14px 0;
+    }
+
+    .player-progress > div {
+      height: 100%;
+      width: 0%;
+      background: #2563eb;
+      transition: width 0.2s ease;
+    }
+
+    .now-playing {
       border: 1px solid var(--line);
+      background: #f8fafc;
       border-radius: 16px;
-      padding: 14px;
-      box-shadow: var(--shadow);
+      padding: 18px;
+      text-align: center;
+      min-height: 180px;
+      display: grid;
+      align-content: center;
+      gap: 8px;
     }
-    .stat .k { color: var(--muted); font-size: 0.9rem; }
-    .stat .v { font-size: 1.5rem; font-weight: 800; margin-top: 4px; }
+
+    .now-playing .term {
+      font-size: 1.8rem;
+      font-weight: 900;
+    }
+
+    .now-playing .kr {
+      font-size: 1.12rem;
+      font-weight: 700;
+    }
+
     .hidden { display: none !important; }
+
     .install-banner {
       position: sticky;
       bottom: 8px;
       z-index: 5;
     }
+
     .empty {
       text-align: center;
       color: var(--muted);
@@ -223,11 +358,17 @@
       border: 1px dashed var(--line);
       border-radius: 14px;
     }
+
     @media (max-width: 780px) {
-      .nav, .stats { grid-template-columns: 1fr; }
-      .col-4, .col-5, .col-6, .col-7, .col-8, .col-12 { grid-column: span 12; }
+      .nav, .stats { grid-template-columns: 1fr 1fr; }
+      .col-3, .col-4, .col-5, .col-6, .col-7, .col-8, .col-12 { grid-column: span 12; }
       .quiz-word { font-size: 1.6rem; }
       #quizChoices { grid-template-columns: 1fr !important; }
+      .entry-head { display: block; }
+    }
+
+    @media (max-width: 480px) {
+      .nav, .stats { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -235,16 +376,17 @@
   <div class="app">
     <div class="hero">
       <div>
-        <h1>Word Book</h1>
-        <p>Study, quiz, and admin in one offline-ready PWA.</p>
+        <h1>Word & Phrase Book</h1>
+        <p>Words, engineering phrases, quiz, and walking-mode audio.</p>
       </div>
-      <div class="pill" id="storageStatus">Loading words...</div>
+      <div class="pill" id="storageStatus">Loading entries...</div>
     </div>
 
     <div class="stats" id="stats"></div>
 
     <div class="nav">
       <button class="active" data-screen="study">Study</button>
+      <button data-screen="listen">Listen</button>
       <button data-screen="quiz">Quiz</button>
       <button data-screen="admin">Admin</button>
     </div>
@@ -254,42 +396,112 @@
         <div class="grid">
           <div class="col-5">
             <label for="searchInput">Search</label>
-            <input id="searchInput" placeholder="Search word, meaning, example..." />
+            <input id="searchInput" placeholder="Search term, meaning, literal meaning, reason, example..." />
           </div>
-          <div class="col-4">
-            <label for="filterSelect">Filter</label>
+          <div class="col-3">
+            <label for="typeFilter">Type</label>
+            <select id="typeFilter">
+              <option value="all">Words + phrases</option>
+              <option value="word">Words only</option>
+              <option value="phrase">Phrases only</option>
+            </select>
+          </div>
+          <div class="col-2">
+            <label for="filterSelect">Status</label>
             <select id="filterSelect">
-              <option value="all">All words</option>
+              <option value="all">All</option>
               <option value="review">Need review</option>
               <option value="favorite">Favorites</option>
               <option value="memorized">Memorized</option>
             </select>
           </div>
-          <div class="col-3">
+          <div class="col-2">
             <label for="sortSelect">Sort</label>
             <select id="sortSelect">
-              <option value="newest">Newest first</option>
-              <option value="oldest">Oldest first</option>
+              <option value="newest">Newest</option>
+              <option value="oldest">Oldest</option>
               <option value="az">A → Z</option>
             </select>
           </div>
         </div>
       </div>
-      <div class="word-list" id="studyList"></div>
+      <div class="entry-list" id="studyList"></div>
+    </section>
+
+    <section class="screen" id="listenScreen">
+      <div class="card player">
+        <div class="row" style="justify-content:space-between;">
+          <div>
+            <div class="player-title">Walking Listen Mode</div>
+            <div class="muted">English term → Korean meaning → example, repeated automatically.</div>
+          </div>
+          <div class="pill" id="listenCounter">0 / 0</div>
+        </div>
+
+        <div class="grid" style="margin-top:14px;">
+          <div class="col-4">
+            <label for="listenScope">Play</label>
+            <select id="listenScope">
+              <option value="all">All entries</option>
+              <option value="review">Need review</option>
+              <option value="favorite">Favorites</option>
+              <option value="word">Words only</option>
+              <option value="phrase">Phrases only</option>
+            </select>
+          </div>
+          <div class="col-4">
+            <label for="listenOrder">Order</label>
+            <select id="listenOrder">
+              <option value="newest">Newest first</option>
+              <option value="az">A → Z</option>
+              <option value="shuffle">Shuffle</option>
+            </select>
+          </div>
+          <div class="col-4">
+            <label for="repeatCount">Repeat each entry</label>
+            <select id="repeatCount">
+              <option value="1">1 time</option>
+              <option value="2" selected>2 times</option>
+              <option value="3">3 times</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="now-playing" style="margin-top:14px;">
+          <div class="tag word" id="listenType">Ready</div>
+          <div class="term" id="listenTerm">Press Play</div>
+          <div class="kr" id="listenMeaning">출근길 자동 재생</div>
+          <div class="muted" id="listenExample"></div>
+        </div>
+
+        <div class="player-progress"><div id="listenProgressBar"></div></div>
+
+        <div class="row" style="justify-content:center;">
+          <button class="ghost" id="listenPrevBtn">Previous</button>
+          <button class="primary" id="listenPlayBtn">Play</button>
+          <button class="warn" id="listenPauseBtn">Pause</button>
+          <button class="secondary" id="listenNextBtn">Next</button>
+          <button class="danger" id="listenStopBtn">Stop</button>
+        </div>
+
+        <p class="muted" style="margin-bottom:0;">
+          iPhone/iPad may pause speech when the screen locks. For continuous playback, keep this PWA open and disable Auto-Lock during the walk.
+        </p>
+      </div>
     </section>
 
     <section class="screen" id="quizScreen">
       <div class="card quiz-box">
         <div class="row" style="justify-content:center; margin-bottom: 8px;">
           <button class="ghost" id="quizModeMeaning">한글 뜻 → 영어 4지선다</button>
-          <button class="ghost" id="quizModeWord">영어 단어 → 한글 뜻 4지선다</button>
+          <button class="ghost" id="quizModeWord">영어 표현 → 한글 뜻 4지선다</button>
           <button class="secondary" id="quizNextBtn">Next</button>
         </div>
 
-        <div class="muted" id="quizPromptLabel">뜻을 보고 맞는 영어 단어를 고르세요</div>
+        <div class="muted" id="quizPromptLabel">뜻을 보고 맞는 영어 표현을 고르세요</div>
         <div class="quiz-word" id="quizPrompt">-</div>
 
-        <div id="quizChoices" style="display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:12px; max-width:640px; margin:20px auto 0;"></div>
+        <div id="quizChoices" style="display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:12px; max-width:680px; margin:20px auto 0;"></div>
 
         <div style="margin-top:16px; font-weight:700;" id="quizResult"></div>
         <div class="muted" style="margin-top:10px;" id="quizHint"></div>
@@ -298,23 +510,40 @@
 
     <section class="screen" id="adminScreen">
       <div class="card">
-        <h2 style="margin-top:0;">Add or edit word</h2>
+        <h2 style="margin-top:0;">Add or edit entry</h2>
         <div class="grid">
-          <div class="col-6">
-            <label for="wordInput">Word</label>
-            <input id="wordInput" placeholder="accurate" />
+          <div class="col-3">
+            <label for="entryTypeInput">Type</label>
+            <select id="entryTypeInput">
+              <option value="word">Word</option>
+              <option value="phrase">Phrase</option>
+            </select>
           </div>
-          <div class="col-6">
+          <div class="col-5">
+            <label for="wordInput">Word / phrase</label>
+            <input id="wordInput" placeholder="in favor of" />
+          </div>
+          <div class="col-4">
             <label for="meaningInput">Meaning</label>
-            <input id="meaningInput" placeholder="정확한" />
+            <input id="meaningInput" placeholder="~을 선택하여, ~을 선호하여" />
           </div>
+
+          <div class="col-6 phrase-field">
+            <label for="literalInput">Literal / meaning flow</label>
+            <input id="literalInput" placeholder="좋게 여기다 → 선호하다 → 채택하다" />
+          </div>
+          <div class="col-6 phrase-field">
+            <label for="whyInput">Why it means this</label>
+            <textarea id="whyInput" placeholder="Explain the core image, nuance, or collocation."></textarea>
+          </div>
+
           <div class="col-12">
             <label for="exampleInput">Example</label>
-            <textarea id="exampleInput" placeholder="The report is accurate."></textarea>
+            <textarea id="exampleInput" placeholder="AA abandoned the passive load pull concept in favor of a switch."></textarea>
           </div>
           <div class="col-6">
             <label for="noteInput">Note</label>
-            <input id="noteInput" placeholder="Related nuance, synonym, etc." />
+            <input id="noteInput" placeholder="Category, synonym, meeting usage, etc." />
           </div>
           <div class="col-3">
             <label><input type="checkbox" id="favoriteInput" style="width:auto; margin-right:8px;"> Favorite</label>
@@ -323,10 +552,11 @@
             <label><input type="checkbox" id="memorizedInput" style="width:auto; margin-right:8px;"> Memorized</label>
           </div>
         </div>
+
         <div class="row" style="margin-top:14px;">
-          <button class="primary" id="saveBtn">Save word</button>
+          <button class="primary" id="saveBtn">Save entry</button>
           <button class="ghost" id="resetBtn">Reset form</button>
-          <button class="secondary" id="seedBtn">Add sample words</button>
+          <button class="secondary" id="seedBtn">Add samples</button>
         </div>
       </div>
 
@@ -338,14 +568,14 @@
             Import JSON
             <input type="file" id="importFile" accept="application/json" class="hidden" />
           </label>
-          <button class="danger" id="clearBtn">Delete all words</button>
+          <button class="danger" id="clearBtn">Delete all entries</button>
         </div>
-        <p class="muted">This replaces the old admin service. Your data stays on this device unless you export it.</p>
+        <p class="muted">Old word JSON and new phrase JSON are both supported.</p>
       </div>
 
       <div class="card">
-        <h2 style="margin-top:0;">Manage words</h2>
-        <div class="word-list" id="adminList"></div>
+        <h2 style="margin-top:0;">Manage entries</h2>
+        <div class="entry-list" id="adminList"></div>
       </div>
     </section>
 
@@ -367,10 +597,17 @@
     let words = [];
     let editingId = null;
     let deferredPrompt = null;
+
     let quizMode = 'meaningToWord';
     let currentQuizWord = null;
     let currentQuizChoices = [];
     let quizLocked = false;
+
+    let listenQueue = [];
+    let listenIndex = 0;
+    let listenPlaying = false;
+    let listenPaused = false;
+    let listenRunToken = 0;
 
     const $ = (id) => document.getElementById(id);
 
@@ -434,8 +671,27 @@
       });
     }
 
+    function normalizeStoredEntry(item) {
+      return {
+        ...item,
+        type: item.type === 'phrase' ? 'phrase' : 'word',
+        word: item.word || item.phrase || item.expression || '',
+        meaning: item.meaning || item.meaning_kr || '',
+        literal: item.literal || '',
+        why: item.why || '',
+        example: item.example || item.example_en || '',
+        note: item.note || item.notes || '',
+        favorite: !!item.favorite,
+        memorized: !!item.memorized,
+      };
+    }
+
+    function entryTerm(entry) {
+      return entry.word || entry.phrase || entry.expression || '';
+    }
+
     function escapeHtml(text = '') {
-      return text
+      return String(text)
         .replaceAll('&', '&amp;')
         .replaceAll('<', '&lt;')
         .replaceAll('>', '&gt;')
@@ -445,156 +701,172 @@
 
     function formatDate(iso) {
       if (!iso) return '-';
-      const d = new Date(iso);
-      return d.toLocaleDateString();
+      return new Date(iso).toLocaleDateString();
     }
 
     function updateStorageStatus() {
-      $('storageStatus').textContent = `${words.length} word${words.length === 1 ? '' : 's'} stored offline`;
+      $('storageStatus').textContent = `${words.length} entr${words.length === 1 ? 'y' : 'ies'} stored offline`;
     }
 
     function renderStats() {
       const total = words.length;
+      const wordCount = words.filter(w => w.type !== 'phrase').length;
+      const phraseCount = words.filter(w => w.type === 'phrase').length;
       const favorites = words.filter(w => w.favorite).length;
-      const memorized = words.filter(w => w.memorized).length;
       const review = words.filter(w => !w.memorized).length;
+
       $('stats').innerHTML = [
         ['Total', total],
+        ['Words', wordCount],
+        ['Phrases', phraseCount],
         ['Favorites', favorites],
-        ['Memorized', memorized],
         ['Need review', review],
       ].map(([k, v]) => `<div class="stat"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('');
     }
 
     function filteredWords() {
       const q = $('searchInput').value.trim().toLowerCase();
+      const typeFilter = $('typeFilter').value;
       const filter = $('filterSelect').value;
       const sort = $('sortSelect').value;
+
       let result = words.filter(w => {
-        const hit = !q || [w.word, w.meaning, w.example, w.note].join(' ').toLowerCase().includes(q);
-        if (!hit) return false;
-        if (filter === 'review') return !w.memorized;
-        if (filter === 'favorite') return !!w.favorite;
-        if (filter === 'memorized') return !!w.memorized;
+        const haystack = [
+          entryTerm(w), w.meaning, w.literal, w.why, w.example, w.note
+        ].join(' ').toLowerCase();
+
+        if (q && !haystack.includes(q)) return false;
+        if (typeFilter !== 'all' && w.type !== typeFilter) return false;
+        if (filter === 'review' && w.memorized) return false;
+        if (filter === 'favorite' && !w.favorite) return false;
+        if (filter === 'memorized' && !w.memorized) return false;
         return true;
       });
 
-      if (sort === 'az') result.sort((a, b) => a.word.localeCompare(b.word));
+      if (sort === 'az') result.sort((a, b) => entryTerm(a).localeCompare(entryTerm(b)));
       else if (sort === 'oldest') result.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
       else result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
       return result;
     }
 
+    function detailHtml(w) {
+      const rows = [];
+      if (w.literal) rows.push(`<div class="detail-row"><span class="detail-label">Literal</span>${escapeHtml(w.literal)}</div>`);
+      if (w.why) rows.push(`<div class="detail-row"><span class="detail-label">Why</span>${escapeHtml(w.why)}</div>`);
+      if (w.example) rows.push(`<div class="detail-row"><span class="detail-label">Example</span>${escapeHtml(w.example)}</div>`);
+      if (w.note) rows.push(`<div class="detail-row"><span class="detail-label">Note</span>${escapeHtml(w.note)}</div>`);
+      return rows.length ? `<div class="detail-box">${rows.join('')}</div>` : '';
+    }
+
     function renderStudy() {
       const list = filteredWords();
       if (!list.length) {
-        $('studyList').innerHTML = '<div class="empty">No words found.</div>';
+        $('studyList').innerHTML = '<div class="empty">No entries found.</div>';
         return;
       }
+
       $('studyList').innerHTML = list.map(w => `
-        <div class="word-item">
-          <div class="row" style="justify-content:space-between; align-items:flex-start;">
+        <article class="entry-item">
+          <div class="entry-head">
             <div>
-              <h3>${escapeHtml(w.word)}</h3>
-              <div><strong>${escapeHtml(w.meaning)}</strong></div>
+              <div>
+                <span class="tag ${w.type === 'phrase' ? 'phrase' : 'word'}">${w.type === 'phrase' ? 'Phrase' : 'Word'}</span>
+                ${w.favorite ? '<span class="tag favorite">Favorite</span>' : ''}
+                ${w.memorized ? '<span class="tag memorized">Memorized</span>' : '<span class="tag review">Need review</span>'}
+              </div>
+              <h3 class="entry-title">${escapeHtml(entryTerm(w))}</h3>
+              <div class="meaning">${escapeHtml(w.meaning)}</div>
             </div>
             <div class="muted">${formatDate(w.createdAt)}</div>
           </div>
-          <p>${escapeHtml(w.example || '')}</p>
-          ${w.note ? `<p class="muted">${escapeHtml(w.note)}</p>` : ''}
-          <div>
-            ${w.favorite ? '<span class="tag favorite">Favorite</span>' : ''}
-            ${w.memorized ? '<span class="tag memorized">Memorized</span>' : '<span class="tag review">Need review</span>'}
-          </div>
-          <div class="row" style="margin-top:10px;">
+
+          ${detailHtml(w)}
+
+          <div class="row" style="margin-top:12px;">
             <button class="ghost" onclick="toggleFavorite(${w.id})">${w.favorite ? 'Unfavorite' : 'Favorite'}</button>
             <button class="ok" onclick="toggleMemorized(${w.id})">${w.memorized ? 'Mark review' : 'Mark memorized'}</button>
-            <button class="secondary" onclick="speakWord('${escapeHtml(w.word)}')">Speak</button>
+            <button class="secondary" onclick="speakEntry(${w.id})">Speak</button>
           </div>
-        </div>
+        </article>
       `).join('');
     }
 
     function renderAdmin() {
       if (!words.length) {
-        $('adminList').innerHTML = '<div class="empty">No words yet. Add your first word above.</div>';
+        $('adminList').innerHTML = '<div class="empty">No entries yet.</div>';
         return;
       }
+
       const sorted = [...words].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       $('adminList').innerHTML = sorted.map(w => `
-        <div class="word-item">
-          <div class="row" style="justify-content:space-between; align-items:flex-start;">
+        <article class="entry-item">
+          <div class="entry-head">
             <div>
-              <h3>${escapeHtml(w.word)}</h3>
-              <div><strong>${escapeHtml(w.meaning)}</strong></div>
+              <span class="tag ${w.type === 'phrase' ? 'phrase' : 'word'}">${w.type === 'phrase' ? 'Phrase' : 'Word'}</span>
+              <h3 class="entry-title">${escapeHtml(entryTerm(w))}</h3>
+              <div class="meaning">${escapeHtml(w.meaning)}</div>
             </div>
             <div class="muted">ID ${w.id}</div>
           </div>
-          <p>${escapeHtml(w.example || '')}</p>
-          ${w.note ? `<p class="muted">${escapeHtml(w.note)}</p>` : ''}
-          <div class="row">
+          ${detailHtml(w)}
+          <div class="row" style="margin-top:12px;">
             <button class="ghost" onclick="editWord(${w.id})">Edit</button>
             <button class="danger" onclick="removeWord(${w.id})">Delete</button>
           </div>
-        </div>
+        </article>
       `).join('');
     }
 
     function setScreen(screen) {
       document.querySelectorAll('.nav button').forEach(btn => btn.classList.toggle('active', btn.dataset.screen === screen));
       document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
-      if (screen === 'study') $('studyScreen').classList.add('active');
-      if (screen === 'quiz') $('quizScreen').classList.add('active');
-      if (screen === 'admin') $('adminScreen').classList.add('active');
+      $(`${screen}Screen`).classList.add('active');
     }
 
     async function refresh() {
-      words = await getAllWords();
+      words = (await getAllWords()).map(normalizeStoredEntry);
       updateStorageStatus();
       renderStats();
       renderStudy();
       renderAdmin();
+      rebuildListenQueue(false);
 
       if (words.length) {
         if (!currentQuizWord) nextQuiz();
       } else {
         currentQuizWord = null;
         currentQuizChoices = [];
-        $('quizPromptLabel').textContent = '퀴즈를 시작하려면 단어를 먼저 추가하세요';
-        $('quizPrompt').textContent = 'Add words first';
+        $('quizPromptLabel').textContent = '퀴즈를 시작하려면 단어나 표현을 먼저 추가하세요';
+        $('quizPrompt').textContent = 'Add entries first';
         $('quizResult').textContent = '';
-        $('quizHint').textContent = 'Use the Admin tab to create your first vocabulary items.';
+        $('quizHint').textContent = '';
         $('quizChoices').innerHTML = '';
       }
     }
 
     async function saveForm() {
+      const type = $('entryTypeInput').value;
       const word = $('wordInput').value.trim();
       const meaning = $('meaningInput').value.trim();
+      const literal = $('literalInput').value.trim();
+      const why = $('whyInput').value.trim();
       const example = $('exampleInput').value.trim();
       const note = $('noteInput').value.trim();
       const favorite = $('favoriteInput').checked;
       const memorized = $('memorizedInput').checked;
 
       if (!word || !meaning) {
-        alert('Word and meaning are required.');
+        alert('Word/phrase and meaning are required.');
         return;
       }
 
-      const data = {
-        word,
-        meaning,
-        example,
-        note,
-        favorite,
-        memorized,
-        createdAt: new Date().toISOString(),
-      };
+      const now = new Date().toISOString();
+      const data = { type, word, meaning, literal, why, example, note, favorite, memorized, createdAt: now };
 
       if (editingId !== null) {
         const prev = words.find(w => w.id === editingId);
-        await putWord({ ...prev, ...data, id: editingId, createdAt: prev.createdAt || data.createdAt, updatedAt: new Date().toISOString() });
+        await putWord({ ...prev, ...data, id: editingId, createdAt: prev.createdAt || now, updatedAt: now });
       } else {
         await addWord(data);
       }
@@ -606,63 +878,93 @@
 
     function resetForm() {
       editingId = null;
+      $('entryTypeInput').value = 'word';
       $('wordInput').value = '';
       $('meaningInput').value = '';
+      $('literalInput').value = '';
+      $('whyInput').value = '';
       $('exampleInput').value = '';
       $('noteInput').value = '';
       $('favoriteInput').checked = false;
       $('memorizedInput').checked = false;
-      $('saveBtn').textContent = 'Save word';
+      $('saveBtn').textContent = 'Save entry';
     }
 
     window.editWord = function(id) {
       const w = words.find(item => item.id === id);
       if (!w) return;
+
       editingId = id;
-      $('wordInput').value = w.word || '';
+      $('entryTypeInput').value = w.type || 'word';
+      $('wordInput').value = entryTerm(w);
       $('meaningInput').value = w.meaning || '';
+      $('literalInput').value = w.literal || '';
+      $('whyInput').value = w.why || '';
       $('exampleInput').value = w.example || '';
       $('noteInput').value = w.note || '';
       $('favoriteInput').checked = !!w.favorite;
       $('memorizedInput').checked = !!w.memorized;
-      $('saveBtn').textContent = 'Update word';
+      $('saveBtn').textContent = 'Update entry';
+
       setScreen('admin');
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+    };
 
     window.removeWord = async function(id) {
       const w = words.find(item => item.id === id);
-      if (!w) return;
-      if (!confirm(`Delete "${w.word}"?`)) return;
+      if (!w || !confirm(`Delete "${entryTerm(w)}"?`)) return;
       await deleteWord(id);
       if (currentQuizWord?.id === id) currentQuizWord = null;
       await refresh();
-    }
+    };
 
     window.toggleFavorite = async function(id) {
       const w = words.find(item => item.id === id);
       if (!w) return;
       await putWord({ ...w, favorite: !w.favorite, updatedAt: new Date().toISOString() });
       await refresh();
-    }
+    };
 
     window.toggleMemorized = async function(id) {
       const w = words.find(item => item.id === id);
       if (!w) return;
       await putWord({ ...w, memorized: !w.memorized, updatedAt: new Date().toISOString() });
       await refresh();
+    };
+
+    function speak(text, lang = 'en-US') {
+      return new Promise(resolve => {
+        if (!text || !('speechSynthesis' in window)) {
+          resolve();
+          return;
+        }
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = lang;
+        utterance.rate = lang === 'ko-KR' ? 0.95 : 0.88;
+        utterance.pitch = 1;
+        utterance.onend = resolve;
+        utterance.onerror = resolve;
+        speechSynthesis.speak(utterance);
+      });
     }
 
-    window.speakWord = function(word) {
-      if (!('speechSynthesis' in window)) {
-        alert('Speech is not supported in this browser.');
-        return;
-      }
-      const utterance = new SpeechSynthesisUtterance(word);
-      utterance.lang = 'en-US';
-      speechSynthesis.cancel();
-      speechSynthesis.speak(utterance);
+    function pauseMs(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
     }
+
+    window.speakEntry = async function(id) {
+      const w = words.find(item => item.id === id);
+      if (!w) return;
+      speechSynthesis.cancel();
+      await speak(entryTerm(w), 'en-US');
+      await pauseMs(250);
+      await speak(w.meaning, 'ko-KR');
+      if (w.example) {
+        await pauseMs(250);
+        await speak(w.example, 'en-US');
+      }
+    };
 
     function shuffle(arr) {
       const copy = [...arr];
@@ -678,24 +980,9 @@
       return pool.length ? pool : words;
     }
 
-    function pickRandomItems(source, count, excludeId = null) {
-      const filtered = excludeId === null ? [...source] : source.filter(item => item.id !== excludeId);
-      return shuffle(filtered).slice(0, Math.min(count, filtered.length));
-    }
-
     function buildQuizChoices(answerWord) {
-      const basePool = words.length >= 4 ? words : getQuizPool();
-      const wrongs = pickRandomItems(basePool, 3, answerWord.id);
-      const rawChoices = [answerWord, ...wrongs];
-
-      if (rawChoices.length < 4) {
-        const more = pickRandomItems(words, 4 - rawChoices.length, answerWord.id);
-        for (const item of more) {
-          if (!rawChoices.some(x => x.id === item.id)) rawChoices.push(item);
-        }
-      }
-
-      return shuffle(rawChoices).slice(0, 4);
+      const source = words.filter(w => w.id !== answerWord.id);
+      return shuffle([answerWord, ...shuffle(source).slice(0, 3)]).slice(0, 4);
     }
 
     function renderQuizChoices() {
@@ -706,12 +993,8 @@
       }
 
       box.innerHTML = currentQuizChoices.map((choice, index) => {
-        const label = quizMode === 'meaningToWord' ? choice.word : choice.meaning;
-        return `
-          <button class="quiz-choice" data-choice-id="${choice.id}">
-            ${index + 1}. ${escapeHtml(label)}
-          </button>
-        `;
+        const label = quizMode === 'meaningToWord' ? entryTerm(choice) : choice.meaning;
+        return `<button class="quiz-choice" data-choice-id="${choice.id}">${index + 1}. ${escapeHtml(label)}</button>`;
       }).join('');
 
       box.querySelectorAll('.quiz-choice').forEach(btn => {
@@ -722,7 +1005,6 @@
     function updateQuizModeButtons() {
       $('quizModeMeaning').classList.toggle('secondary', quizMode === 'meaningToWord');
       $('quizModeMeaning').classList.toggle('ghost', quizMode !== 'meaningToWord');
-
       $('quizModeWord').classList.toggle('secondary', quizMode === 'wordToMeaning');
       $('quizModeWord').classList.toggle('ghost', quizMode !== 'wordToMeaning');
     }
@@ -739,11 +1021,11 @@
       $('quizHint').textContent = '';
 
       if (quizMode === 'meaningToWord') {
-        $('quizPromptLabel').textContent = '뜻을 보고 맞는 영어 단어를 고르세요';
+        $('quizPromptLabel').textContent = '뜻을 보고 맞는 영어 단어 또는 표현을 고르세요';
         $('quizPrompt').textContent = currentQuizWord.meaning;
       } else {
-        $('quizPromptLabel').textContent = '영어 단어를 보고 맞는 한글 뜻을 고르세요';
-        $('quizPrompt').textContent = currentQuizWord.word;
+        $('quizPromptLabel').textContent = '영어 단어 또는 표현을 보고 맞는 한글 뜻을 고르세요';
+        $('quizPrompt').textContent = entryTerm(currentQuizWord);
       }
 
       renderQuizChoices();
@@ -759,44 +1041,180 @@
 
       buttons.forEach(btn => {
         btn.classList.add('disabled');
-        const btnId = Number(btn.dataset.choiceId);
-        if (btnId === currentQuizWord.id) btn.classList.add('correct');
+        if (Number(btn.dataset.choiceId) === currentQuizWord.id) btn.classList.add('correct');
       });
 
       if (!isCorrect) {
         clickedBtn.classList.add('wrong');
         $('quizResult').textContent = 'Not quite';
         $('quizResult').style.color = 'var(--danger)';
-        $('quizHint').textContent = `정답: ${currentQuizWord.word} = ${currentQuizWord.meaning}`;
+        $('quizHint').textContent = `정답: ${entryTerm(currentQuizWord)} = ${currentQuizWord.meaning}`;
         quizLocked = false;
         return;
       }
 
-      clickedBtn.classList.add('correct');
       $('quizResult').textContent = 'Correct';
       $('quizResult').style.color = 'var(--ok)';
-      $('quizHint').textContent = `Example: ${currentQuizWord.example || '-'}`;
+      $('quizHint').textContent = currentQuizWord.example ? `Example: ${currentQuizWord.example}` : '';
 
       if (!currentQuizWord.memorized) {
-        await putWord({
-          ...currentQuizWord,
-          memorized: true,
-          updatedAt: new Date().toISOString()
-        });
+        await putWord({ ...currentQuizWord, memorized: true, updatedAt: new Date().toISOString() });
         await refresh();
       }
 
-      setTimeout(() => {
-        nextQuiz();
-      }, 500);
+      setTimeout(nextQuiz, 500);
+    }
+
+    function getListenSource() {
+      const scope = $('listenScope').value;
+      let source = [...words];
+
+      if (scope === 'review') source = source.filter(w => !w.memorized);
+      if (scope === 'favorite') source = source.filter(w => w.favorite);
+      if (scope === 'word') source = source.filter(w => w.type !== 'phrase');
+      if (scope === 'phrase') source = source.filter(w => w.type === 'phrase');
+
+      const order = $('listenOrder').value;
+      if (order === 'shuffle') source = shuffle(source);
+      else if (order === 'az') source.sort((a, b) => entryTerm(a).localeCompare(entryTerm(b)));
+      else source.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+      return source;
+    }
+
+    function rebuildListenQueue(resetIndex = true) {
+      listenQueue = getListenSource();
+      if (resetIndex) listenIndex = 0;
+      if (listenIndex >= listenQueue.length) listenIndex = 0;
+      renderListenState();
+    }
+
+    function renderListenState() {
+      const total = listenQueue.length;
+      const current = total ? listenQueue[listenIndex] : null;
+
+      $('listenCounter').textContent = total ? `${listenIndex + 1} / ${total}` : '0 / 0';
+      $('listenProgressBar').style.width = total ? `${((listenIndex + 1) / total) * 100}%` : '0%';
+
+      if (!current) {
+        $('listenType').textContent = 'Empty';
+        $('listenType').className = 'tag word';
+        $('listenTerm').textContent = 'No entries';
+        $('listenMeaning').textContent = '재생할 항목이 없습니다';
+        $('listenExample').textContent = '';
+        return;
+      }
+
+      $('listenType').textContent = current.type === 'phrase' ? 'Phrase' : 'Word';
+      $('listenType').className = `tag ${current.type === 'phrase' ? 'phrase' : 'word'}`;
+      $('listenTerm').textContent = entryTerm(current);
+      $('listenMeaning').textContent = current.meaning;
+      $('listenExample').textContent = current.example || '';
+    }
+
+    async function playCurrentEntry(token) {
+      const entry = listenQueue[listenIndex];
+      if (!entry) return;
+
+      const repeats = Number($('repeatCount').value || 1);
+
+      for (let i = 0; i < repeats; i++) {
+        if (!listenPlaying || token !== listenRunToken) return;
+        await speak(entryTerm(entry), 'en-US');
+        if (!listenPlaying || token !== listenRunToken) return;
+        await pauseMs(350);
+
+        await speak(entry.meaning, 'ko-KR');
+        if (!listenPlaying || token !== listenRunToken) return;
+
+        if (entry.literal) {
+          await pauseMs(250);
+          await speak(`Literal meaning. ${entry.literal}`, 'en-US');
+        }
+
+        if (entry.example) {
+          await pauseMs(300);
+          await speak(entry.example, 'en-US');
+        }
+
+        await pauseMs(700);
+      }
+    }
+
+    async function startListen() {
+      if (!('speechSynthesis' in window)) {
+        alert('Speech synthesis is not supported in this browser.');
+        return;
+      }
+
+      if (!listenQueue.length) rebuildListenQueue(true);
+      if (!listenQueue.length) return;
+
+      speechSynthesis.cancel();
+      listenPlaying = true;
+      listenPaused = false;
+      listenRunToken += 1;
+      const token = listenRunToken;
+
+      $('listenPlayBtn').disabled = true;
+      $('listenPauseBtn').disabled = false;
+
+      while (listenPlaying && token === listenRunToken && listenQueue.length) {
+        renderListenState();
+        await playCurrentEntry(token);
+        if (!listenPlaying || token !== listenRunToken) break;
+        listenIndex = (listenIndex + 1) % listenQueue.length;
+      }
+
+      $('listenPlayBtn').disabled = false;
+    }
+
+    function pauseListen() {
+      if (!listenPlaying) return;
+
+      if (!listenPaused) {
+        speechSynthesis.pause();
+        listenPaused = true;
+        $('listenPauseBtn').textContent = 'Resume';
+      } else {
+        speechSynthesis.resume();
+        listenPaused = false;
+        $('listenPauseBtn').textContent = 'Pause';
+      }
+    }
+
+    function stopListen() {
+      listenPlaying = false;
+      listenPaused = false;
+      listenRunToken += 1;
+      speechSynthesis.cancel();
+      $('listenPauseBtn').textContent = 'Pause';
+      $('listenPlayBtn').disabled = false;
+    }
+
+    function nextListen() {
+      stopListen();
+      if (!listenQueue.length) rebuildListenQueue(true);
+      if (!listenQueue.length) return;
+      listenIndex = (listenIndex + 1) % listenQueue.length;
+      renderListenState();
+    }
+
+    function prevListen() {
+      stopListen();
+      if (!listenQueue.length) rebuildListenQueue(true);
+      if (!listenQueue.length) return;
+      listenIndex = (listenIndex - 1 + listenQueue.length) % listenQueue.length;
+      renderListenState();
     }
 
     async function exportJson() {
-      const blob = new Blob([JSON.stringify(words, null, 2)], { type: 'application/json' });
+      const exportItems = words.map(({ id, ...item }) => ({ id, ...item }));
+      const blob = new Blob([JSON.stringify(exportItems, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `wordbook-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      a.download = `word-phrase-book-${new Date().toISOString().slice(0, 10)}.json`;
       a.click();
       URL.revokeObjectURL(url);
     }
@@ -810,36 +1228,33 @@
             ? payload.items
             : null;
 
-      if (!rawItems) {
-        throw new Error('JSON must be an array or an object with a words/items array.');
-      }
+      if (!rawItems) throw new Error('JSON must be an array or an object with a words/items array.');
 
       return rawItems.map((item, index) => {
+        const type = item.type === 'phrase' || item.phrase ? 'phrase' : 'word';
+        const term = item.word || item.phrase || item.expression || '';
         const category = item.category ? `Category: ${item.category}` : '';
         const source = item.source ? `Source: ${item.source}` : '';
         const exampleKr = item.example_kr ? `Example KR: ${item.example_kr}` : '';
 
-        const mergedNote = [
-          item.note,
-          item.notes,
-          category,
-          source,
-          exampleKr,
-        ].filter(Boolean).join('\n');
+        const mergedNote = [item.note, item.notes, category, source, exampleKr]
+          .filter(Boolean)
+          .join('\n');
 
         const createdAt = item.createdAt || item.created_at || new Date().toISOString();
 
         return {
           id: Number.isInteger(item.id) && item.id > 0 ? item.id : undefined,
-          word: (item.word || item.expression || '').trim(),
-          meaning: (item.meaning || item.meaning_kr || '').trim(),
-          example: (item.example || item.example_en || '').trim(),
+          type,
+          word: String(term).trim(),
+          meaning: String(item.meaning || item.meaning_kr || '').trim(),
+          literal: String(item.literal || '').trim(),
+          why: String(item.why || '').trim(),
+          example: String(item.example || item.example_en || '').trim(),
           note: mergedNote.trim(),
           favorite: !!item.favorite,
           memorized: !!item.memorized,
-          createdAt: String(createdAt).includes('T')
-            ? String(createdAt)
-            : String(createdAt).replace(' ', 'T'),
+          createdAt: String(createdAt).includes('T') ? String(createdAt) : String(createdAt).replace(' ', 'T'),
           updatedAt: item.updatedAt || item.updated_at || null,
           _row: index + 1,
         };
@@ -847,35 +1262,32 @@
     }
 
     async function importJson(file) {
-      const rawText = await file.text();
       let payload;
       try {
-        payload = JSON.parse(rawText);
-      } catch (err) {
+        payload = JSON.parse(await file.text());
+      } catch {
         throw new Error('Invalid JSON file.');
       }
 
       const importedItems = normalizeImportedItems(payload);
-      if (!importedItems.length) {
-        throw new Error('No valid words found in the file.');
-      }
+      if (!importedItems.length) throw new Error('No valid entries found.');
 
       let importedCount = 0;
       let updatedCount = 0;
       let skippedCount = 0;
 
       for (const item of importedItems) {
-        const duplicateByWord = words.find(existing =>
-          existing.word.trim().toLowerCase() === item.word.toLowerCase() &&
+        const duplicate = words.find(existing =>
+          entryTerm(existing).trim().toLowerCase() === item.word.toLowerCase() &&
           existing.meaning.trim().toLowerCase() === item.meaning.toLowerCase()
         );
 
-        if (duplicateByWord) {
+        if (duplicate) {
           await putWord({
-            ...duplicateByWord,
+            ...duplicate,
             ...item,
-            id: duplicateByWord.id,
-            createdAt: duplicateByWord.createdAt || item.createdAt,
+            id: duplicate.id,
+            createdAt: duplicate.createdAt || item.createdAt,
             updatedAt: new Date().toISOString(),
           });
           updatedCount += 1;
@@ -883,14 +1295,13 @@
         }
 
         try {
-          if (item.id !== undefined) {
-            await putWord(item);
-          } else {
+          if (item.id !== undefined) await putWord(item);
+          else {
             const { id, _row, ...data } = item;
             await addWord(data);
           }
           importedCount += 1;
-        } catch (err) {
+        } catch {
           try {
             const { id, _row, ...data } = item;
             await addWord(data);
@@ -907,44 +1318,85 @@
     }
 
     async function seedSampleWords() {
+      const now = new Date().toISOString();
       const sample = [
-        { word: 'accurate', meaning: '정확한', example: 'The report is accurate.', note: 'close to exact truth', favorite: true, memorized: false },
-        { word: 'hesitate', meaning: '망설이다', example: 'Do not hesitate to ask questions.', note: 'pause before action', favorite: false, memorized: false },
-        { word: 'practical', meaning: '실용적인', example: 'This is a practical solution.', note: 'useful in real life', favorite: false, memorized: true },
+        {
+          type: 'phrase',
+          word: 'in favor of',
+          meaning: '~을 선택하여, ~을 선호하여',
+          literal: '좋게 여기다 → 선호하다 → 채택하다',
+          why: "favor의 핵심은 '좋게 여기다'이다. 사람에게 향하면 호의, 의견에 향하면 찬성, 선택지에 향하면 선호와 채택이 된다.",
+          example: 'AA abandoned the passive load pull concept in favor of a switch.',
+          note: 'Decision / trade-off',
+          favorite: true,
+          memorized: false,
+          createdAt: now,
+        },
+        {
+          type: 'phrase',
+          word: 'keep someone apprised of',
+          meaning: '~에게 계속 상황을 알려주다',
+          literal: '상대가 최신 정보를 알고 있게 유지하다',
+          why: 'apprise는 inform보다 더 공식적이고 프로젝트·계약 문맥에서 자주 쓰인다.',
+          example: 'Please keep KT apprised of any schedule changes.',
+          note: 'Business email',
+          favorite: false,
+          memorized: false,
+          createdAt: now,
+        },
+        {
+          type: 'word',
+          word: 'stride',
+          meaning: '큰 걸음; 의미 있는 진전',
+          literal: '',
+          why: '',
+          example: 'The team has made significant strides.',
+          note: 'Usually used as make strides',
+          favorite: false,
+          memorized: false,
+          createdAt: now,
+        }
       ];
-      for (const item of sample) {
-        await addWord({ ...item, createdAt: new Date().toISOString() });
-      }
+
+      for (const item of sample) await addWord(item);
       await refresh();
       setScreen('study');
     }
 
     function bindEvents() {
-      document.querySelectorAll('.nav button').forEach(btn => btn.addEventListener('click', () => setScreen(btn.dataset.screen)));
-      ['searchInput', 'filterSelect', 'sortSelect'].forEach(id => $(id).addEventListener('input', renderStudy));
+      document.querySelectorAll('.nav button').forEach(btn => btn.addEventListener('click', () => {
+        setScreen(btn.dataset.screen);
+        if (btn.dataset.screen !== 'listen') stopListen();
+      }));
+
+      ['searchInput', 'typeFilter', 'filterSelect', 'sortSelect'].forEach(id => $(id).addEventListener('input', renderStudy));
+
       $('saveBtn').addEventListener('click', saveForm);
       $('resetBtn').addEventListener('click', resetForm);
       $('seedBtn').addEventListener('click', seedSampleWords);
       $('exportBtn').addEventListener('click', exportJson);
+
       $('clearBtn').addEventListener('click', async () => {
-        if (!confirm('Delete all words from this device?')) return;
+        if (!confirm('Delete all entries from this device?')) return;
+        stopListen();
         await clearAllWords();
         currentQuizWord = null;
         currentQuizChoices = [];
         await refresh();
       });
+
       $('importFile').addEventListener('change', async (e) => {
         const file = e.target.files[0];
         if (!file) return;
         try {
           await importJson(file);
-          alert('Import complete.');
         } catch (err) {
           alert(`Import failed: ${err.message}`);
         } finally {
           e.target.value = '';
         }
       });
+
       $('quizNextBtn').addEventListener('click', nextQuiz);
       $('quizModeMeaning').addEventListener('click', () => {
         quizMode = 'meaningToWord';
@@ -954,6 +1406,18 @@
         quizMode = 'wordToMeaning';
         nextQuiz();
       });
+
+      ['listenScope', 'listenOrder'].forEach(id => $(id).addEventListener('change', () => {
+        stopListen();
+        rebuildListenQueue(true);
+      }));
+
+      $('listenPlayBtn').addEventListener('click', startListen);
+      $('listenPauseBtn').addEventListener('click', pauseListen);
+      $('listenStopBtn').addEventListener('click', stopListen);
+      $('listenNextBtn').addEventListener('click', nextListen);
+      $('listenPrevBtn').addEventListener('click', prevListen);
+
       $('installBtn').addEventListener('click', async () => {
         if (!deferredPrompt) return;
         deferredPrompt.prompt();
